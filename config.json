@@ -1,0 +1,12 @@
+{
+    "debugLevel":"info",
+    "logDir": "",
+    "maxLogFiles": 1,
+    "MaxLogFileSize": 100,
+    "merkleRootAPI":"https://solitary-responsive-putty.celo-mainnet.quiknode.pro/40a3938f2f03f6ae973996eccf6106a9ab27c418",
+    "autherKeystore": "./auther.keystore",
+    "autherPassword": "elastos",
+    "merkleRootListenerInterval": 60
+}
+
+
