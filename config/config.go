@@ -3,6 +3,7 @@ package config
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"io/ioutil"
 	"os"
 	"os/user"
@@ -24,6 +25,9 @@ type Config struct {
 	AutherPassword string `json:"autherPassword,omitempty"`
 
 	MerkleRootListenerInterval int64 `json:"merkleRootListenerInterval,omitempty"` //seconds
+
+	ChainRPC    string `json:"chainRPC,omitempty"`
+	CredaOracle string `json:"credaOracle,omitempty"`
 }
 
 func DefaultConfig() Config {
@@ -36,6 +40,8 @@ func DefaultConfig() Config {
 		AutherKeystore:             "auther.keystore",
 		AutherPassword:             "",
 		MerkleRootListenerInterval: 60,
+		ChainRPC:                   "",
+		CredaOracle:                "",
 	}
 }
 
@@ -60,6 +66,14 @@ func LoadConfig() (*Config, error) {
 
 func (cfg *Config) ValidateConfig() error {
 	cfg.LogDir = CleanAndExpandPath(cfg.LogDir)
+
+	if cfg.ChainRPC == "" {
+		return errors.New("ChainRPC is empty")
+	}
+
+	if cfg.CredaOracle == "" {
+		return errors.New("CredaOracle is empty")
+	}
 	return nil
 }
 

@@ -1,7 +1,8 @@
 package node
 
 import (
-	"fmt"
+	"github.com/ethereum/go-ethereum/common"
+	"github.com/ttblack/CredaAutherNode/credaContract"
 	"sync"
 
 	"github.com/ttblack/CredaAutherNode/config"
@@ -11,6 +12,7 @@ import (
 
 type AutherNode struct {
 	listener       *javaListener.MerkleRootListener
+	credaOracle    *credaContract.CredaOracle
 	merkleRootChan chan string
 }
 
@@ -23,6 +25,13 @@ func New(cfg *config.Config) (*AutherNode, error) {
 		return nil, err
 	}
 	node.listener = listener
+
+	oracle, err := credaContract.New(cfg.ChainRPC, cfg.CredaOracle)
+	if err != nil {
+		return nil, err
+	}
+	node.credaOracle = oracle
+
 	return node, nil
 }
 
@@ -33,7 +42,8 @@ func (a *AutherNode) Start(wg *sync.WaitGroup, interceptor *signal.Interceptor) 
 	for {
 		select {
 		case root := <-a.merkleRootChan:
-			fmt.Println("root", root)
+			hash := common.HexToHash(root)
+			a.credaOracle.SetMerkleRoot(hash)
 		case <-interceptor.ShutdownChannel():
 			a.listener.Stop()
 			wg.Done()
