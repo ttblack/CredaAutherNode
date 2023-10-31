@@ -8,6 +8,8 @@ import (
 	"fmt"
 	"math/big"
 
+	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ttblack/CredaAutherNode/crypto/secp256k1"
 )
 
@@ -33,6 +35,23 @@ func NewKeypairFromString(priv string) (*Keypair, error) {
 		public:  pk.Public().(*ecdsa.PublicKey),
 		private: pk,
 	}, nil
+}
+
+func NewKeypair(prvkey *ecdsa.PrivateKey) (*Keypair, error) {
+	return &Keypair{
+		public:  prvkey.Public().(*ecdsa.PublicKey),
+		private: prvkey,
+	}, nil
+}
+
+// CommonAddress returns the Ethereum address in the common.Address Format
+func (kp *Keypair) CommonAddress() common.Address {
+	return crypto.PubkeyToAddress(*kp.public)
+}
+
+// PrivateKey returns the keypair's private key
+func (kp *Keypair) PrivateKey() *ecdsa.PrivateKey {
+	return kp.private
 }
 
 // HexToECDSA parses a secp256k1 private key.
