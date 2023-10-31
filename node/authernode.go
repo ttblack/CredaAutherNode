@@ -2,6 +2,7 @@ package node
 
 import (
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/log"
 	"github.com/ttblack/CredaAutherNode/credaContract"
 	"sync"
 
@@ -43,7 +44,10 @@ func (a *AutherNode) Start(wg *sync.WaitGroup, interceptor *signal.Interceptor) 
 		select {
 		case root := <-a.merkleRootChan:
 			hash := common.HexToHash(root)
-			a.credaOracle.SetMerkleRoot(hash)
+			_, err := a.credaOracle.SetMerkleRoot(hash)
+			if err != nil {
+				log.Error("SetMerkleRoot", "error", err)
+			}
 		case <-interceptor.ShutdownChannel():
 			a.listener.Stop()
 			wg.Done()
