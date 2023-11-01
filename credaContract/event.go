@@ -8,7 +8,7 @@ import (
 )
 
 func SetMerkleRoot() abi.ABI {
-	definition := "{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"_merkleRoot\",\"type\":\"bytes32\"}],\"name\":\"setMerkleRoot\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"}"
+	definition := "[{\n      \"inputs\": [\n        {\n          \"internalType\": \"bytes32\",\n          \"name\": \"_merkleRoot\",\n          \"type\": \"bytes32\"\n        }\n      ],\n      \"name\": \"setMerkleRoot\",\n      \"outputs\": [],\n      \"stateMutability\": \"nonpayable\",\n      \"type\": \"function\"\n    }]"
 	a, err := abi.JSON(strings.NewReader(definition))
 	if err != nil {
 		log.Error("SetMerkleRoot failed", "error", err)

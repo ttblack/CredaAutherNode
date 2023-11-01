@@ -7,7 +7,7 @@
     "merkleRootAPI":"https://solitary-responsive-putty.celo-mainnet.quiknode.pro/40a3938f2f03f6ae973996eccf6106a9ab27c418",
     "merkleRootListenerInterval": 60,
 
-    "autherKeystore": "./auther.keystore",
+    "autherKeystore": "./keystore/auther.keystore",
     "autherPassword": "elastos",
     "chainRPC": "https://api-testnet.elastos.io/esc",
     "credaOracle": "0x36aFfC79ABBd2F8Aaf32800A1333c524aF3bCE79"

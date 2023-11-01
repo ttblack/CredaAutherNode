@@ -2,29 +2,45 @@ package credaContract
 
 import (
 	"context"
-	"crypto/ecdsa"
 	"errors"
 	"fmt"
+	"io/ioutil"
+	"math/big"
+	"os"
+
 	"github.com/ethereum/go-ethereum"
+	"github.com/ethereum/go-ethereum/accounts/keystore"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/log"
 	"github.com/ttblack/CredaAutherNode/client"
-	"github.com/ttblack/CredaAutherNode/crypto"
-	"math/big"
 )
 
 type CredaOracle struct {
 	rpcClient *client.Client
+	key       *keystore.Key
 }
 
-func New(rpc, contractAddress string) (*CredaOracle, error) {
+func New(rpc, contractAddress, keystorePath, password string) (*CredaOracle, error) {
 	cli, err := client.Dial(rpc, contractAddress)
+	if err != nil {
+		return nil, err
+	}
+	if keystorePath == "" {
+		return nil, errors.New("keystorePath is nil")
+	}
+	file, err := os.OpenFile(keystorePath, os.O_RDONLY, 0400)
+	if err != nil {
+		return nil, err
+	}
+	data, _ := ioutil.ReadAll(file)
+	key, err := keystore.DecryptKey(data, password)
 	if err != nil {
 		return nil, err
 	}
 	oracle := &CredaOracle{
 		rpcClient: cli,
+		key:       key,
 	}
 	return oracle, nil
 }
@@ -36,7 +52,8 @@ func (c *CredaOracle) SetMerkleRoot(merkleRoot common.Hash) (common.Hash, error)
 		return common.Hash{}, errors.New(fmt.Sprintf("pack param err: %v", err))
 	}
 
-	hash, err := c.makeAndSendContractTransaction(input, big.NewInt(0), nil)
+	hash, err := c.makeAndSendContractTransaction(input, big.NewInt(0))
+	fmt.Println("hash", hash.String(), "err", err)
 	if err != nil {
 		return common.Hash{}, errors.New(fmt.Sprintf("make and send tx err: %v", err))
 	}
@@ -45,13 +62,10 @@ func (c *CredaOracle) SetMerkleRoot(merkleRoot common.Hash) (common.Hash, error)
 	return hash, nil
 }
 
-func (c *CredaOracle) makeAndSendContractTransaction(data []byte, value *big.Int, prvKey *ecdsa.PrivateKey) (common.Hash, error) {
+func (c *CredaOracle) makeAndSendContractTransaction(data []byte, value *big.Int) (common.Hash, error) {
 	var hash common.Hash
-	keypair, err := crypto.NewKeypair(prvKey)
-	if err != nil {
-		return hash, err
-	}
-	from := keypair.CommonAddress()
+	from := c.key.Address
+
 	ctx := context.Background()
 	gasPrice, err := c.rpcClient.SuggestGasPrice(ctx)
 	if err != nil {
@@ -75,15 +89,15 @@ func (c *CredaOracle) makeAndSendContractTransaction(data []byte, value *big.Int
 
 	tx := NewTransaction(nonce, c.rpcClient.GetContractAddress(), value, gasLimit, gasPrice, data)
 	log.Info("makeAndSendContractTransaction", "gasLimit", gasLimit, "gasPrice", gasPrice, "nonce", nonce)
-	return c.SignAndSendTransaction(ctx, keypair.PrivateKey(), tx)
+	return c.SignAndSendTransaction(ctx, tx)
 }
 
-func (c *CredaOracle) SignAndSendTransaction(ctx context.Context, privateKey *ecdsa.PrivateKey, tx *types.Transaction) (common.Hash, error) {
+func (c *CredaOracle) SignAndSendTransaction(ctx context.Context, tx *types.Transaction) (common.Hash, error) {
 	id, err := c.rpcClient.ChainID(ctx)
 	if err != nil {
 		return common.Hash{}, err
 	}
-	rawTX, err := RawWithSignature(privateKey, id, tx)
+	rawTX, err := RawWithSignature(c.key.PrivateKey, id, tx)
 	if err != nil {
 		return common.Hash{}, err
 	}

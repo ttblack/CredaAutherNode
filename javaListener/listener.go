@@ -13,7 +13,6 @@ type MerkleRootListener struct {
 }
 
 func Create(api string, merkleRootCh chan string, intervalSeconds int64) (*MerkleRootListener, error) {
-	fmt.Println("interval", intervalSeconds)
 	l := &MerkleRootListener{
 		url:               api,
 		merkleRoot_ch:     merkleRootCh,

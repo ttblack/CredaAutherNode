@@ -27,7 +27,7 @@ func New(cfg *config.Config) (*AutherNode, error) {
 	}
 	node.listener = listener
 
-	oracle, err := credaContract.New(cfg.ChainRPC, cfg.CredaOracle)
+	oracle, err := credaContract.New(cfg.ChainRPC, cfg.CredaOracle, cfg.AutherKeystore, cfg.AutherPassword)
 	if err != nil {
 		return nil, err
 	}
