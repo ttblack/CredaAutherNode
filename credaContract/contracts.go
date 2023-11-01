@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"io/ioutil"
+	"log"
 	"math/big"
 	"os"
 
@@ -12,7 +13,6 @@ import (
 	"github.com/ethereum/go-ethereum/accounts/keystore"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
-	"github.com/ethereum/go-ethereum/log"
 	"github.com/ttblack/CredaAutherNode/client"
 )
 
@@ -45,20 +45,37 @@ func New(rpc, contractAddress, keystorePath, password string) (*CredaOracle, err
 	return oracle, nil
 }
 
-func (c *CredaOracle) SetMerkleRoot(merkleRoot common.Hash) (common.Hash, error) {
+func (c *CredaOracle) SetMerkleRoot(merkleRoot common.Hash) error {
 	a := SetMerkleRoot()
 	input, err := a.Pack("setMerkleRoot", merkleRoot)
+	if err != nil {
+		return errors.New(fmt.Sprintf("pack param err: %v", err))
+	}
+
+	hash, err := c.makeAndSendContractTransaction(input, big.NewInt(0))
+	if err != nil {
+		return errors.New(fmt.Sprintf("make and send tx err: %v", err))
+	}
+
+	log.Println("SetMerkleRoot OK, tx hash", hash.String())
+	return nil
+}
+
+func (c *CredaOracle) GetMerkleRoot() (common.Hash, error) {
+	a := GetMerkleRoot()
+	input, err := a.Pack("getRoot")
 	if err != nil {
 		return common.Hash{}, errors.New(fmt.Sprintf("pack param err: %v", err))
 	}
 
-	hash, err := c.makeAndSendContractTransaction(input, big.NewInt(0))
-	fmt.Println("hash", hash.String(), "err", err)
-	if err != nil {
-		return common.Hash{}, errors.New(fmt.Sprintf("make and send tx err: %v", err))
+	msg := ethereum.CallMsg{From: common.Address{}, To: c.rpcClient.GetContractAddress(), Data: input}
+
+	out, err := c.rpcClient.CallContract(context.TODO(), msg, nil)
+	if err != nil || len(out) <= 0 {
+		return common.Hash{}, errors.New(fmt.Sprintf("CallContract output empty or err: %v", err))
 	}
 
-	log.Info("SetMerkleRoot hash: %v", hash)
+	hash := common.BytesToHash(out)
 	return hash, nil
 }
 
@@ -69,13 +86,13 @@ func (c *CredaOracle) makeAndSendContractTransaction(data []byte, value *big.Int
 	ctx := context.Background()
 	gasPrice, err := c.rpcClient.SuggestGasPrice(ctx)
 	if err != nil {
-		log.Error("SuggestGasPrice", "error", err)
+		log.Printf("SuggestGasPrice err: %v", err)
 		return hash, err
 	}
 	msg := ethereum.CallMsg{From: from, To: c.rpcClient.GetContractAddress(), Data: data, GasPrice: gasPrice}
 	gasLimit, err := c.rpcClient.EstimateGas(ctx, msg)
 	if err != nil {
-		log.Error("EstimateGas", "error", err)
+		log.Printf("EstimateGas err: %v", err)
 		return hash, err
 	}
 	if gasLimit == 0 {
@@ -83,12 +100,12 @@ func (c *CredaOracle) makeAndSendContractTransaction(data []byte, value *big.Int
 	}
 	nonce, err := c.rpcClient.PendingNonceAt(ctx, from)
 	if err != nil {
-		log.Error("PendingNonceAt", "error", err)
+		log.Printf("PendingNonceAt err: %v", err)
 		return hash, err
 	}
 
 	tx := NewTransaction(nonce, c.rpcClient.GetContractAddress(), value, gasLimit, gasPrice, data)
-	log.Info("makeAndSendContractTransaction", "gasLimit", gasLimit, "gasPrice", gasPrice, "nonce", nonce)
+	log.Println("makeAndSendContractTransaction", "gasLimit", gasLimit, "gasPrice", gasPrice, "nonce", nonce)
 	return c.SignAndSendTransaction(ctx, tx)
 }
 

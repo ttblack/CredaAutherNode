@@ -1,17 +1,28 @@
 package credaContract
 
 import (
+	"fmt"
 	"strings"
 
 	"github.com/ethereum/go-ethereum/accounts/abi"
-	"github.com/ethereum/go-ethereum/log"
 )
 
 func SetMerkleRoot() abi.ABI {
-	definition := "[{\n      \"inputs\": [\n        {\n          \"internalType\": \"bytes32\",\n          \"name\": \"_merkleRoot\",\n          \"type\": \"bytes32\"\n        }\n      ],\n      \"name\": \"setMerkleRoot\",\n      \"outputs\": [],\n      \"stateMutability\": \"nonpayable\",\n      \"type\": \"function\"\n    }]"
+	definition := "[{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"_merkleRoot\",\"type\":\"bytes32\"}],\"name\":\"setMerkleRoot\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"}]"
 	a, err := abi.JSON(strings.NewReader(definition))
 	if err != nil {
-		log.Error("SetMerkleRoot failed", "error", err)
+		fmt.Println("SetMerkleRoot failed", "error", err)
+		return a
+	}
+
+	return a
+}
+
+func GetMerkleRoot() abi.ABI {
+	definition := "[{\"inputs\":[],\"name\":\"getRoot\",\"outputs\":[{\"internalType\":\"bytes32\",\"name\":\"\",\"type\":\"bytes32\"}],\"stateMutability\":\"view\",\"type\":\"function\"}]"
+	a, err := abi.JSON(strings.NewReader(definition))
+	if err != nil {
+		fmt.Println("GetMerkleRoot failed", "error", err)
 		return a
 	}
 
