@@ -51,6 +51,13 @@ func toCallArg(msg ethereum.CallMsg) map[string]interface{} {
 	return arg
 }
 
+func toBlockNumArg(number *big.Int) string {
+	if number == nil {
+		return "latest"
+	}
+	return hexutil.EncodeBig(number)
+}
+
 func (c *Client) GetContractAddress() *common.Address {
 	return &c.contractAddress
 }
@@ -92,6 +99,15 @@ func (c *Client) SendRawTransaction(ctx context.Context, tx []byte) (common.Hash
 	err := c.rpcClient.CallContext(ctx, &hex, "eth_sendRawTransaction", hexutil.Encode(tx))
 	if err != nil {
 		return hex, err
+	}
+	return hex, nil
+}
+
+func (c *Client) CallContract(ctx context.Context, msg ethereum.CallMsg, blockNumber *big.Int) ([]byte, error) {
+	var hex hexutil.Bytes
+	err := c.rpcClient.CallContext(ctx, &hex, "eth_call", toCallArg(msg), toBlockNumArg(blockNumber))
+	if err != nil {
+		return nil, err
 	}
 	return hex, nil
 }
