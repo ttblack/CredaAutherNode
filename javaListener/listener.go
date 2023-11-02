@@ -91,6 +91,6 @@ func (l *MerkleRootListener) Start() {
 }
 
 func (l *MerkleRootListener) Stop() {
-	fmt.Println("MerkleRootListener stop")
+	log.Println("MerkleRootListener stop")
 	l.delayTimer.Stop()
 }

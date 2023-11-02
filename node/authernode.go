@@ -12,9 +12,10 @@ import (
 )
 
 type AutherNode struct {
-	listener       *javaListener.MerkleRootListener
-	credaOracle    *credaContract.CredaOracle
-	merkleRootChan chan string
+	listener          *javaListener.MerkleRootListener
+	credaOracle       *credaContract.CredaOracle
+	merkleRootChan    chan string
+	currentMerkleRoot string
 }
 
 func New(cfg *config.Config) (*AutherNode, error) {
@@ -38,6 +39,12 @@ func New(cfg *config.Config) (*AutherNode, error) {
 
 func (a *AutherNode) Start(wg *sync.WaitGroup, interceptor *signal.Interceptor) {
 	wg.Add(1)
+	current, err := a.credaOracle.GetMerkleRoot()
+	if err != nil {
+		log.Println("GetMerkleRoot err", err)
+	}
+	a.currentMerkleRoot = current.String()
+
 	go a.listener.Start()
 
 	for {
@@ -45,15 +52,11 @@ func (a *AutherNode) Start(wg *sync.WaitGroup, interceptor *signal.Interceptor) 
 		case root := <-a.merkleRootChan:
 			newRoot := common.HexToHash(root)
 			log.Println("new root: ", newRoot)
-			oldRoot, err := a.credaOracle.GetMerkleRoot()
-			if err != nil {
-				log.Println("GetMerkleRoot err", err)
-				continue
-			}
-
-			if newRoot != oldRoot {
+			if newRoot.String() != a.currentMerkleRoot {
 				if err := a.credaOracle.SetMerkleRoot(newRoot); err != nil {
 					log.Println("SetMerkleRoot err", err)
+				} else {
+					a.currentMerkleRoot = newRoot.String()
 				}
 			}
 
