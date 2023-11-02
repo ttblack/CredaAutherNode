@@ -69,8 +69,6 @@ func (l *MerkleRootListener) httpGetMerkleRoot() (string, error) {
 		return "", errors.New(fmt.Sprintf("unmarshal http respond err: %v", err))
 	}
 
-	log.Println("root", result.Data.Root)
-
 	return result.Data.Root, nil
 }
 

@@ -51,7 +51,7 @@ func (a *AutherNode) Start(wg *sync.WaitGroup, interceptor *signal.Interceptor) 
 		select {
 		case root := <-a.merkleRootChan:
 			newRoot := common.HexToHash(root)
-			log.Println("new root: ", newRoot)
+			log.Println("new root: ", newRoot, "currentMerkleRoot", a.currentMerkleRoot)
 			if newRoot.String() != a.currentMerkleRoot {
 				if err := a.credaOracle.SetMerkleRoot(newRoot); err != nil {
 					log.Println("SetMerkleRoot err", err)
