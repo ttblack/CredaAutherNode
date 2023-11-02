@@ -43,10 +43,20 @@ func (a *AutherNode) Start(wg *sync.WaitGroup, interceptor *signal.Interceptor) 
 	for {
 		select {
 		case root := <-a.merkleRootChan:
-			hash := common.HexToHash(root)
-			if err := a.credaOracle.SetMerkleRoot(hash); err != nil {
-				log.Printf("SetMerkleRoot err: %v", err)
+			newRoot := common.HexToHash(root)
+			log.Println("new root: ", newRoot)
+			oldRoot, err := a.credaOracle.GetMerkleRoot()
+			if err != nil {
+				log.Println("GetMerkleRoot err", err)
+				continue
 			}
+
+			if newRoot != oldRoot {
+				if err := a.credaOracle.SetMerkleRoot(newRoot); err != nil {
+					log.Println("SetMerkleRoot err", err)
+				}
+			}
+
 		case <-interceptor.ShutdownChannel():
 			a.listener.Stop()
 			wg.Done()
