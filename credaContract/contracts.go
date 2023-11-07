@@ -8,12 +8,14 @@ import (
 	"log"
 	"math/big"
 	"os"
+	"syscall"
 
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/accounts/keystore"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ttblack/CredaAutherNode/client"
+	"golang.org/x/term"
 )
 
 type CredaOracle struct {
@@ -21,7 +23,7 @@ type CredaOracle struct {
 	key       *keystore.Key
 }
 
-func New(rpc, contractAddress, keystorePath, password string) (*CredaOracle, error) {
+func New(rpc, contractAddress, keystorePath string) (*CredaOracle, error) {
 	cli, err := client.Dial(rpc, contractAddress)
 	if err != nil {
 		return nil, err
@@ -34,6 +36,14 @@ func New(rpc, contractAddress, keystorePath, password string) (*CredaOracle, err
 		return nil, err
 	}
 	data, _ := ioutil.ReadAll(file)
+
+	fmt.Print("Enter Keystore Password: ")
+	bytePassword, err := term.ReadPassword(int(syscall.Stdin))
+	if err != nil {
+		return nil, errors.New(fmt.Sprintf("read password for keystore err: %v", err))
+	}
+	password := string(bytePassword)
+
 	key, err := keystore.DecryptKey(data, password)
 	if err != nil {
 		return nil, err
@@ -42,6 +52,9 @@ func New(rpc, contractAddress, keystorePath, password string) (*CredaOracle, err
 		rpcClient: cli,
 		key:       key,
 	}
+
+	fmt.Println("")
+
 	return oracle, nil
 }
 

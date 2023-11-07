@@ -8,7 +8,6 @@
     "merkleRootListenerInterval": 60,
 
     "autherKeystore": "./keystore/auther.keystore",
-    "autherPassword": "elastos",
     "chainRPC": "https://api-testnet.elastos.io/esc",
     "credaOracle": "0x36aFfC79ABBd2F8Aaf32800A1333c524aF3bCE79"
 

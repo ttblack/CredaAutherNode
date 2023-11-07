@@ -28,7 +28,7 @@ func New(cfg *config.Config) (*AutherNode, error) {
 	}
 	node.listener = listener
 
-	oracle, err := credaContract.New(cfg.ChainRPC, cfg.CredaOracle, cfg.AutherKeystore, cfg.AutherPassword)
+	oracle, err := credaContract.New(cfg.ChainRPC, cfg.CredaOracle, cfg.AutherKeystore)
 	if err != nil {
 		return nil, err
 	}
@@ -38,6 +38,7 @@ func New(cfg *config.Config) (*AutherNode, error) {
 }
 
 func (a *AutherNode) Start(wg *sync.WaitGroup, interceptor *signal.Interceptor) {
+	log.Println("Starting...")
 	wg.Add(1)
 	current, err := a.credaOracle.GetMerkleRoot()
 	if err != nil {
